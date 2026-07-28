@@ -86,8 +86,8 @@ def save_progress(brand="", car_class="", tg_id="", completed=False):
 
 def check_7_day_cycle():
     prog = load_progress()
-    if time.time() - prog.get("cycle_start", 0) > 604800:
-        print("\n⏳ [週期檢查] 超過 7 天，啟動全面掃描（保留歷史資料）...")
+    if time.time() - prog.get("cycle_start", 0) > 2592000:
+        print("\n⏳ [週期檢查] 超過 30 天，啟動全面掃描（保留歷史資料）...")
         fresh = {"cycle_start": time.time(), "last_brand": "", "last_class": "", "last_tg": ""}
         with open(PROGRESS_FILE, 'w', encoding='utf-8') as f:
             json.dump(fresh, f)
