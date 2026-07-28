@@ -3,7 +3,10 @@ name: 自動胎壓檢測器爬蟲 (V10)
 # 設定排程時間
 on:
   schedule:
-    - cron: '0 0,12 * * *' # 每天執行兩次，利用斷點接關機制推進
+    # 修改為：每 3 天的凌晨 0 點 (UTC時間) 執行一次
+    # 這樣既能提供斷點接關的機會，又不會每天頻繁喚醒機器。
+    # 搭配 Python 內部的 30 天檢查邏輯，達到最完美的自動化循環。
+    - cron: '0 0 */3 * *' 
   workflow_dispatch: # 允許手動隨時執行
 
 # 允許此工作流寫入回 GitHub
@@ -18,6 +21,8 @@ jobs:
     steps:
       - name: 取得程式碼
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 確保拉取完整的 git 歷史紀錄，避免後續 rebase 失敗
 
       - name: 設定 Python 環境
         uses: actions/setup-python@v5
@@ -40,6 +45,7 @@ jobs:
             胎壓檢測器資料庫_V10/
             胎壓檢測器資料庫_V10.db
             胎壓檢測器資料庫_V10.sql
+            scrape_progress_V10.json
 
       - name: 提交更新進度到 GitHub
         if: always()
@@ -56,5 +62,9 @@ jobs:
             echo "沒有偵測到任何資料更新，跳過提交。"
           else
             git commit -m "🤖 [V10 自動存檔] 資料庫與 Excel 更新 [skip ci]"
+            
+            # 🌟 核心修復：在 push 之前，先把雲端上可能被修改的進度拉下來合併，解決 rejected 錯誤
+            git pull --rebase origin main
+            
             git push
           fi
